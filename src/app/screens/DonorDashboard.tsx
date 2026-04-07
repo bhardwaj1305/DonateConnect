@@ -3,30 +3,11 @@ import { Package, TrendingUp, Clock, AlertCircle, Plus } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
-const mockDonations = [
-  {
-    id: 1,
-    item: "Canned Food (24 units)",
-    status: "delivered",
-    date: "2026-02-20",
-    recipient: "Emergency Relief Center",
-  },
-  {
-    id: 2,
-    item: "Winter Clothes (15 pieces)",
-    status: "in-transit",
-    date: "2026-02-22",
-    recipient: "Community Shelter",
-  },
-  {
-    id: 3,
-    item: "Bottled Water (48 units)",
-    status: "pending",
-    date: "2026-02-24",
-    recipient: "Disaster Response Team",
-  },
-];
+;
 
 const activeDrives = [
   {
@@ -49,6 +30,49 @@ const activeDrives = [
 
 export function DonorDashboard() {
   const navigate = useNavigate();
+
+  const [donations, setDonations] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    items: 0,
+    inTransit: 0,
+    helped: 0,
+  });
+
+  useEffect(() => {
+    const fetchDonations = async () => {
+      const snapshot = await getDocs(collection(db, "donations"));
+
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setDonations(data);
+
+      // 🔥 CALCULATE STATS
+      let total = data.length;
+      let items = 0;
+      let inTransit = 0;
+
+      data.forEach((d: any) => {
+        items += Number(d.quantity || 0);
+
+        if (d.status === "in-transit") {
+          inTransit++;
+        }
+      });
+
+      setStats({
+        total,
+        items,
+        inTransit,
+        helped: total, // simple logic
+      });
+    };
+
+    fetchDonations();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -85,8 +109,7 @@ export function DonorDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Total Donations</CardDescription>
-            <CardTitle className="text-3xl">24</CardTitle>
-          </CardHeader>
+<CardTitle className="text-3xl">{stats.total}</CardTitle>          </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-sm text-green-600">
               <TrendingUp className="w-4 h-4" />
@@ -98,8 +121,7 @@ export function DonorDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Items Donated</CardDescription>
-            <CardTitle className="text-3xl">156</CardTitle>
-          </CardHeader>
+<CardTitle className="text-3xl">{stats.inTransit}</CardTitle>          </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Package className="w-4 h-4" />
@@ -111,7 +133,7 @@ export function DonorDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>In Transit</CardDescription>
-            <CardTitle className="text-3xl">5</CardTitle>
+            <CardTitle className="text-3xl">{stats.inTransit}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-sm text-blue-600">
@@ -124,7 +146,7 @@ export function DonorDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>People Helped</CardDescription>
-            <CardTitle className="text-3xl">47</CardTitle>
+            <CardTitle className="text-3xl">{stats.helped}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -186,19 +208,26 @@ export function DonorDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockDonations.map((donation) => (
-              <div
+                {donations.map((donation: any) => (              <div
                 key={donation.id}
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4 last:border-0 last:pb-0"
               >
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{donation.item}</h3>
-                  <p className="text-sm text-gray-600">To: {donation.recipient}</p>
-                  <p className="text-xs text-gray-500 mt-1">{donation.date}</p>
-                </div>
-                <Badge className={getStatusColor(donation.status)}>
-                  {donation.status.replace("-", " ")}
-                </Badge>
+  <h3 className="font-medium text-gray-900">
+    {donation.itemName} ({donation.quantity})
+  </h3>
+
+  <p className="text-sm text-gray-600">
+    {donation.description}
+  </p>
+
+  <p className="text-xs text-gray-500 mt-1">
+    {donation.preferredDate}
+  </p>
+</div>
+                <Badge className={getStatusColor(donation.status || "pending")}>
+  {(donation.status || "pending").replace("-", " ")}
+</Badge>
               </div>
             ))}
           </div>

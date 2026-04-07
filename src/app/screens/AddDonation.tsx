@@ -7,6 +7,9 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../../firebase";
+
 
 export function AddDonation() {
   const navigate = useNavigate();
@@ -20,11 +23,30 @@ export function AddDonation() {
     preferredDate: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock submission
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    await addDoc(collection(db, "donations"), {
+      category: formData.category,
+      itemName: formData.itemName,
+      quantity: Number(formData.quantity),
+      description: formData.description,
+      condition: formData.condition,
+      pickupAddress: formData.pickupAddress,
+      preferredDate: formData.preferredDate,
+      status: "pending",
+    });
+
+    alert("Donation Added 🚀");
+
     navigate("/donor");
-  };
+
+  } catch (error) {
+    console.error(error);
+    alert("Error ❌");
+  }
+};
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

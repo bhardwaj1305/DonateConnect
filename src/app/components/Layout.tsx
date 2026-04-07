@@ -1,18 +1,23 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { Heart, Package, Truck, Shield, LogOut, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
-
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const role = location.pathname.split("/")[1];
-
-  const handleLogout = () => {
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
     navigate("/");
-  };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const getNavItems = () => {
     switch (role) {

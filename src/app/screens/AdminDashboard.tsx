@@ -70,19 +70,7 @@ const handleLogout = async () => {
           <p className="text-gray-600 mt-1">Oversee platform operations and manage drives</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-  <Button
-    onClick={() => navigate("/admin/drives")}
-    className="bg-red-500 hover:bg-red-600"
-  >
-    Manage Drives
-  </Button>
-
-  <Button
-    onClick={handleLogout}
-    className="bg-gray-800 text-white hover:bg-gray-900"
-  >
-    Logout
-  </Button>
+  
 </div>
       </div>
 

@@ -71,12 +71,10 @@ export function AdminDriveManagement() {
 
   const handleCreateDrive = async (e: React.FormEvent) => {
   e.preventDefault();
-  const handleCreateDrive = async (e: React.FormEvent) => {
-  e.preventDefault();
 
   try {
-    // 🟡 EDIT MODE
     if (editDriveId !== null) {
+      // ✏️ UPDATE
       const ref = doc(db, "drives", editDriveId);
 
       await updateDoc(ref, {
@@ -100,7 +98,7 @@ export function AdminDriveManagement() {
       alert("Drive Updated ✏️");
       setEditDriveId(null);
     } else {
-      // 🟢 CREATE MODE
+      // 🚀 CREATE
       const docRef = await addDoc(collection(db, "drives"), {
         name: newDrive.name,
         description: newDrive.description,
@@ -143,9 +141,6 @@ export function AdminDriveManagement() {
     console.error(error);
     alert("Error ❌");
   }
-};
-
-  
 };
 
   const handleDelete = async (id: string) => {
