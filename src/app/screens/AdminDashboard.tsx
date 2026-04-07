@@ -3,6 +3,8 @@ import { Users, Package, Truck, TrendingUp, AlertCircle, CheckCircle } from "luc
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
 
 const recentActivity = [
   {
@@ -48,7 +50,17 @@ const platformStats = [
 
 export function AdminDashboard() {
   const navigate = useNavigate();
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
 
+    alert("Logged out 👋");
+
+    navigate("/"); // login page
+  } catch (error) {
+    console.error(error);
+  }
+};
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -57,12 +69,21 @@ export function AdminDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-1">Oversee platform operations and manage drives</p>
         </div>
-        <Button
-          onClick={() => navigate("/admin/drives")}
-          className="bg-red-500 hover:bg-red-600 w-full md:w-auto"
-        >
-          Manage Drives
-        </Button>
+        <div className="flex gap-2 w-full md:w-auto">
+  <Button
+    onClick={() => navigate("/admin/drives")}
+    className="bg-red-500 hover:bg-red-600"
+  >
+    Manage Drives
+  </Button>
+
+  <Button
+    onClick={handleLogout}
+    className="bg-gray-800 text-white hover:bg-gray-900"
+  >
+    Logout
+  </Button>
+</div>
       </div>
 
       {/* Stats Cards */}

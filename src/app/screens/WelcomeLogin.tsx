@@ -4,6 +4,9 @@ import { Heart, Mail, Lock } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../../firebase";
+import { collection, getDocs } from "firebase/firestore";
 import {
   Card,
   CardContent,
@@ -18,29 +21,42 @@ export function WelcomeLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // check if user exists
-    const storedUser = localStorage.getItem("user");
+  try {
+    // 🔐 Login
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
-    if (!storedUser) {
-      setError("No account found. Please register first.");
-      return;
-    }
+    const userEmail = userCredential.user.email;
 
-    const user = JSON.parse(storedUser);
+    // 📂 Get users collection
+    const querySnapshot = await getDocs(collection(db, "users"));
 
-    // validate credentials
-    if (email !== user.email || password !== user.password) {
-      setError("Invalid email or password");
-      return;
-    }
+    let role = "";
 
-    // success
-    setError("");
-  navigate(`/${user.role}`);
-  };
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.email === userEmail) {
+        role = data.role;
+      }
+    });
+
+    // 🚀 Navigate based on role
+    if (role === "donor") navigate("/donor");
+    else if (role === "recipient") navigate("/recipient");
+    else if (role === "logistics") navigate("/logistics");
+    else if (role === "admin") navigate("/admin");
+    else alert("Role not found ❌");
+
+  } catch (error) {
+    alert("Invalid email or password ❌");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-4">

@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { db } from "../../firebase";
+import { addDoc, collection } from "firebase/firestore";
+import { getDocs } from "firebase/firestore";
+import { useEffect } from "react";
+import { deleteDoc, doc } from "firebase/firestore";
+import { updateDoc } from "firebase/firestore";
 import {
   Plus,
   Calendar,
@@ -29,14 +35,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 export function AdminDriveManagement() {
   const navigate = useNavigate();
 
-  // Load from localStorage
-  const [drives, setDrives] = useState<any[]>(() => {
-    const saved = localStorage.getItem("drives");
-    return saved ? JSON.parse(saved) : [];
-  });
+ const [drives, setDrives] = useState<any[]>([]);
 
+  useEffect(() => {
+    const fetchDrives = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "drives"));
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setDrives(data);
+      } catch (error) {
+        console.error("Error fetching drives", error);
+      }
+    };
+
+    fetchDrives();
+  }, 
+  []);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editDriveId, setEditDriveId] = useState<number | null>(null);
+  const [editDriveId, setEditDriveId] = useState<string | null>(null);
 
   const [newDrive, setNewDrive] = useState({
     name: "",
@@ -48,37 +69,62 @@ export function AdminDriveManagement() {
     urgent: false,
   });
 
-  const handleCreateDrive = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateDrive = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const handleCreateDrive = async (e: React.FormEvent) => {
+  e.preventDefault();
 
+  try {
+    // 🟡 EDIT MODE
     if (editDriveId !== null) {
-      // EDIT
-      const updated = drives.map((d) =>
-        d.id === editDriveId
-          ? {
-              ...d,
-              ...newDrive,
-              goal: Number(newDrive.goal),
-            }
-          : d
+      const ref = doc(db, "drives", editDriveId);
+
+      await updateDoc(ref, {
+        name: newDrive.name,
+        description: newDrive.description,
+        goal: Number(newDrive.goal),
+        startDate: newDrive.startDate,
+        endDate: newDrive.endDate,
+        category: newDrive.category,
+        urgent: newDrive.urgent,
+      });
+
+      setDrives((prev) =>
+        prev.map((d) =>
+          d.id === editDriveId
+            ? { ...d, ...newDrive, goal: Number(newDrive.goal) }
+            : d
+        )
       );
 
-      setDrives(updated);
-      localStorage.setItem("drives", JSON.stringify(updated));
+      alert("Drive Updated ✏️");
       setEditDriveId(null);
     } else {
-      // CREATE
-      const driveData = {
-        id: Date.now(),
-        ...newDrive,
+      // 🟢 CREATE MODE
+      const docRef = await addDoc(collection(db, "drives"), {
+        name: newDrive.name,
+        description: newDrive.description,
         goal: Number(newDrive.goal),
+        startDate: newDrive.startDate,
+        endDate: newDrive.endDate,
+        category: newDrive.category,
+        urgent: newDrive.urgent,
         collected: 0,
         status: "active",
-      };
+      });
 
-      const updated = [...drives, driveData];
-      setDrives(updated);
-      localStorage.setItem("drives", JSON.stringify(updated));
+      setDrives((prev) => [
+        ...prev,
+        {
+          id: docRef.id,
+          ...newDrive,
+          goal: Number(newDrive.goal),
+          collected: 0,
+          status: "active",
+        },
+      ]);
+
+      alert("Drive Created 🚀");
     }
 
     setIsCreateOpen(false);
@@ -92,13 +138,26 @@ export function AdminDriveManagement() {
       category: "",
       urgent: false,
     });
-  };
 
-  const handleDelete = (id: number) => {
-    const updated = drives.filter((d) => d.id !== id);
-    setDrives(updated);
-    localStorage.setItem("drives", JSON.stringify(updated));
-  };
+  } catch (error) {
+    console.error(error);
+    alert("Error ❌");
+  }
+};
+
+  
+};
+
+  const handleDelete = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, "drives", id));
+
+    setDrives((prev) => prev.filter((d) => d.id !== id));
+
+  } catch (error) {
+    console.error("Delete error", error);
+  }
+};
 
   const handleEdit = (drive: any) => {
     setNewDrive({

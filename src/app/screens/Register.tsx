@@ -4,6 +4,10 @@ import { Heart, User, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebase";
+import { db } from "../../firebase";
+import { addDoc, collection } from "firebase/firestore";
 import {
   Card,
   CardContent,
@@ -23,46 +27,29 @@ export function Register() {
     role: "donor",
   });
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  const existingUser = localStorage.getItem("user");
+  try {
+    // 🔐 Step 1: Create user in Firebase Auth
+    await createUserWithEmailAndPassword(
+      auth,
+      formData.email,
+      formData.password
+    );
 
-  if (existingUser) {
-    const user = JSON.parse(existingUser);
-    if (user.email === formData.email) {
-      alert("Email already registered. Please login.");
-      return;
-    }
-  }
-
-  if (formData.password.length < 6) {
-    alert("Password must be at least 6 characters");
-    return;
-  }
-
-  const hasLetter = /[A-Za-z]/.test(formData.password);
-  const hasNumber = /[0-9]/.test(formData.password);
-
-  if (!hasLetter || !hasNumber) {
-    alert("Password must contain letters and numbers");
-    return;
-  }
-
-  // save user
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      name: formData.name,
+    // 🗂️ Step 2: Save extra data (role) in Firestore
+    await addDoc(collection(db, "users"), {
       email: formData.email,
-      password: formData.password,
       role: formData.role,
-    })
-  );
+    });
 
-  alert("Registered successfully. Please login.");
+    alert("Registered successfully ✅");
 
-  navigate("/"); // go to login
+    navigate("/"); // back to login
+  } catch (error: any) {
+    alert(error.message);
+  }
 };
 
   return (
