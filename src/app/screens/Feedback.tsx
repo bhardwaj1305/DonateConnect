@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Star, Send, ThumbsUp, MessageSquare, ArrowLeft } from "lucide-react";
@@ -6,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
+import { getDoc,addDoc, collection } from "firebase/firestore";
+import { db } from "../../firebase";
 
 const receivedDonations = [
   {
@@ -41,15 +44,30 @@ export function Feedback() {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [feedback, setFeedback] = useState("");
+const handleSubmitFeedback = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const handleSubmitFeedback = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock submission
-    console.log("Feedback submitted:", { donationId: selectedDonation.id, rating, feedback });
+  try {
+    await addDoc(collection(db, "feedback"), {
+      donationId: selectedDonation.id,
+      item: selectedDonation.item,
+      donor: selectedDonation.donor,
+      rating: rating,
+      comment: feedback,
+      date: new Date().toISOString(),
+    });
+
+    alert("Feedback Submitted ⭐");
+
     setSelectedDonation(null);
     setRating(0);
     setFeedback("");
-  };
+
+  } catch (error) {
+    console.error(error);
+    alert("Error ❌");
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -246,11 +264,7 @@ export function Feedback() {
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-4 h-4 ${
-                                i < donation.rating
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-gray-300"
-                              }`}
+                              
                             />
                           ))}
                         </div>
